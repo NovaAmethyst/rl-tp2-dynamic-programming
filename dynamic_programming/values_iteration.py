@@ -26,6 +26,21 @@ def mdp_value_iteration(mdp: MDP, max_iter: int = 1000, gamma=1.0) -> np.ndarray
     """
     values = np.zeros(mdp.observation_space.n)
     # BEGIN SOLUTION
+    for i in range(max_iter):
+        tmp = values.copy()
+        for state in range(mdp.observation_space.n):
+            value = None
+            mdp.reset_state(state)
+            for action in range(mdp.action_space.n):
+                dest, rec, _, _ = mdp.step(action, transition=False)
+                temp_value = rec + gamma * values[dest]
+                if value is None or temp_value > value:
+                    value = temp_value
+            tmp[state] = value
+        print(values, tmp)
+        if values.all(tmp):
+            break
+        values = tmp
     # END SOLUTION
     return values
 
