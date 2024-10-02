@@ -29,16 +29,14 @@ def mdp_value_iteration(mdp: MDP, max_iter: int = 1000, gamma=1.0) -> np.ndarray
     for i in range(max_iter):
         tmp = values.copy()
         for state in range(mdp.observation_space.n):
-            value = None
+            tmp[state] = float("-inf")
             mdp.reset_state(state)
             for action in range(mdp.action_space.n):
                 dest, rec, _, _ = mdp.step(action, transition=False)
                 temp_value = rec + gamma * values[dest]
-                if value is None or temp_value > value:
-                    value = temp_value
-            tmp[state] = value
-        print(values, tmp)
-        if values.all(tmp):
+                if temp_value > tmp[state]:
+                    tmp[state] = temp_value
+        if (values==tmp).all():
             break
         values = tmp
     # END SOLUTION
@@ -57,6 +55,27 @@ def grid_world_value_iteration(
     """
     values = np.zeros((4, 4))
     # BEGIN SOLUTION
+    print(env.grid)
+    for i in range(max_iter):
+        tmp = values.copy()
+        for row in range(4):
+            for col in range(4):
+                if env.grid[row][col] in ['W', 'N', 'P']:
+                    continue
+                env.set_state(row, col)
+                tmp[row, col] = float("-inf")
+                for action in range(env.action_space.n):
+                    (x, y), rec, end, dic = env.step(action, make_move=False)
+                    if end is True:
+                        temp_value = rec
+                    else:
+                        temp_value = rec + gamma * values[x, y]
+                    if temp_value > tmp[row, col]:
+                        tmp[row, col] = temp_value
+        if np.isclose(values, tmp, rtol=theta).all():
+            break
+        values = tmp
+    return values
     # END SOLUTION
 
 
@@ -87,3 +106,15 @@ def stochastic_grid_world_value_iteration(
 ) -> np.ndarray:
     values = np.zeros((4, 4))
     # BEGIN SOLUTION
+    for _ in range(max_iter):
+        tmp_values = values.copy()
+        delta = 0
+        for row in range(4):
+            for col in range(4):
+                env.set_state(row, col)
+                delta = value_iteration_per_state(env, tmp_values, gamma, values, theta)
+        if delta < theta:
+            break
+        values = tmp_values
+    return values
+    # END SOLUTION
